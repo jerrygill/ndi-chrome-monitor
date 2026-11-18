@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NDI Chrome Monitor</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div class="brand">
+        <span class="led" id="statusLed"></span>
+        <div>
+          <div class="title">NDI Chrome Monitor</div>
+          <div class="sub" id="statusText">Checking connection...</div>
+        </div>
+      </div>
+      <button id="reconnectBtn" class="btn-ghost" title="Reconnect">↻</button>
+    </div>
+
+    <div class="badges">
+      <span class="badge" id="modeBadge">Mode: Detecting...</span>
+      <span class="badge" id="tabsBadge">0 Tabs</span>
+    </div>
+
+    <label class="field">
+      <span>Bridge WebSocket URL</span>
+      <input id="wsUrl" type="text" placeholder="ws://127.0.0.1:8765/ws/extension" />
+    </label>
+
+    <label class="toggle">
+      <input id="trustedDebugger" type="checkbox" checked />
+      <span>Trusted Input Mode (allows remote YouTube fullscreen &amp; Meet clicks)</span>
+    </label>
+
+    <label class="toggle">
+      <input id="keepLocalAudio" type="checkbox" checked />
+      <span>Keep local tab audio audible when Studio sharing</span>
+    </label>
+
+    <div class="actions">
+      <button id="saveBtn" class="btn-primary">Save &amp; Connect</button>
+      <button id="openMonitorBtn" class="btn-secondary">Open Monitor</button>
+    </div>
+
+    <div class="ext-id-row">
+      <span class="mono" id="extIdText">ID: ...</span>
+      <button id="copyIdBtn" class="btn-mini">Copy ID</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

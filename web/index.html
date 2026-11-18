@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NDI Monitor" />
+  <title>NDI Chrome Monitor</title>
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <!-- HEADER BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand">
+          <span class="signal-dot" id="wsDot" title="Bridge WebSocket"></span>
+          <span class="brand-name">NDI</span>
+        </div>
+
+        <div class="source-picker">
+          <select id="ndiSourceSelect" aria-label="NDI Source">
+            <option value="">Select NDI Source…</option>
+          </select>
+          <button id="refreshSourcesBtn" class="btn-icon" type="button" title="Refresh NDI Sources" aria-label="Refresh NDI Sources">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <span class="pill" id="extStatusPill" title="Chrome Extension status">Offline</span>
+        <button id="audioToggleBtn" class="btn-chip" type="button" title="Enable NDI Audio" aria-label="Toggle NDI Audio">
+          <span id="audioIcon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          </span>
+          <span class="hide-xs" id="audioLabel">Audio</span>
+        </button>
+        <button id="qrBtn" class="btn-chip" type="button" title="Pair iPhone / LAN URL">QR</button>
+        <button id="toggleControlsBtn" class="btn-chip" type="button" title="Collapse or expand top controls" aria-label="Toggle Top Controls">
+          <span id="toggleControlsIcon">▲</span>
+          <span class="hide-xs">Controls</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TOP CONTROL DOCK (DIRECTLY ABOVE NDI MONITOR) -->
+    <section class="control-dock" id="controlDock" aria-label="Chrome Remote Controls">
+      <!-- Quick Launch & Instant Share Bar -->
+      <div class="quick-bar">
+        <form id="openUrlForm" class="url-form" autocomplete="off">
+          <input
+            id="urlInput"
+            type="text"
+            inputmode="url"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="Open URL in Chrome (e.g. slides.new, youtube.com…)"
+            aria-label="URL to open in Chrome"
+          />
+          <button class="btn btn-primary btn-sm" type="submit">Open</button>
+        </form>
+
+        <div class="quick-meet-bar">
+          <select id="quickShareSelect" aria-label="Tab to share in Google Meet">
+            <option value="">Pick tab to share…</option>
+          </select>
+          <button id="quickShareBtn" class="btn btn-emerald btn-sm" type="button">Share Tab</button>
+          <button id="quickStopShareBtn" class="btn btn-danger btn-sm" type="button" disabled>Stop</button>
+          <button id="quickMicBtn" class="btn btn-subtle btn-sm" type="button" title="Toggle Meet Mic">Mic</button>
+          <button id="quickCamBtn" class="btn btn-subtle btn-sm" type="button" title="Toggle Meet Camera">Cam</button>
+        </div>
+      </div>
+
+      <!-- Dock Navigation Tabs -->
+      <div class="dock-nav">
+        <div class="dock-tabs" role="tablist">
+          <button class="dock-tab active" data-panel="slides" type="button" role="tab">
+            Slides <span class="tab-badge" id="badgeSlides" hidden></span>
+          </button>
+          <button class="dock-tab" data-panel="youtube" type="button" role="tab">
+            YouTube <span class="tab-badge" id="badgeYoutube" hidden></span>
+          </button>
+          <button class="dock-tab" data-panel="tabs" type="button" role="tab">
+            Tabs <span class="tab-badge" id="badgeTabs">0</span>
+          </button>
+          <button class="dock-tab" data-panel="meet" type="button" role="tab">
+            Meet <span class="tab-badge" id="badgeMeet" hidden></span>
+          </button>
+          <button class="dock-tab" data-panel="ndi" type="button" role="tab">
+            Stream
+          </button>
+        </div>
+
+        <div class="dock-quick-links">
+          <button class="btn-mini" data-open-url="https://meet.google.com" type="button">+ Meet</button>
+          <button class="btn-mini" data-open-url="https://docs.google.com/presentation" type="button">+ Slides</button>
+          <button class="btn-mini" data-open-url="https://www.youtube.com" type="button">+ YouTube</button>
+        </div>
+      </div>
+
+      <!-- Panel Stage -->
+      <div class="dock-panels">
+        <!-- SLIDES PANEL -->
+        <div class="panel active" data-panel="slides">
+          <div class="panel-row">
+            <select id="slidesTabSelect" class="tab-picker" aria-label="Google Slides Tab"></select>
+            <span class="status-chip" id="slidesStatusChip">No Slides tab open</span>
+            <button id="slidesFocusBtn" class="btn btn-subtle btn-sm" type="button">Focus</button>
+            <button id="slidesShareBtn" class="btn btn-emerald btn-sm" type="button">Share in Meet</button>
+          </div>
+          <div class="slides-controls">
+            <button id="slidesPrevBtn" class="btn btn-nav" type="button">◀ Prev</button>
+            <button id="slidesNextBtn" class="btn btn-nav btn-primary" type="button">Next ▶</button>
+            <button id="slidesPresentBtn" class="btn btn-amber" type="button">Present</button>
+            <button id="slidesExitBtn" class="btn btn-subtle" type="button">Exit</button>
+            <form id="slidesGotoForm" class="goto-form">
+              <input id="slidesGotoInput" type="number" min="1" placeholder="#" aria-label="Slide number" />
+              <button class="btn btn-subtle btn-sm" type="submit">Go</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- YOUTUBE PANEL -->
+        <div class="panel" data-panel="youtube">
+          <div class="panel-row">
+            <select id="ytTabSelect" class="tab-picker" aria-label="YouTube Tab"></select>
+            <span class="status-chip" id="ytTimeChip">00:00 / 00:00</span>
+            <button id="ytFocusBtn" class="btn btn-subtle btn-sm" type="button">Focus</button>
+            <button id="ytShareBtn" class="btn btn-emerald btn-sm" type="button">Share in Meet</button>
+          </div>
+
+          <div class="yt-scrubber-row">
+            <input id="ytScrubRange" type="range" min="0" max="100" value="0" step="1" aria-label="Seek video" />
+          </div>
+
+          <div class="yt-controls">
+            <button id="ytBack10Btn" class="btn btn-subtle" type="button">-10s</button>
+            <button id="ytPlayPauseBtn" class="btn btn-primary" type="button">▶ Play</button>
+            <button id="ytFwd10Btn" class="btn btn-subtle" type="button">+10s</button>
+            <button id="ytMuteBtn" class="btn btn-subtle" type="button">Mute</button>
+            <div class="vol-wrap">
+              <span class="vol-lbl">Vol</span>
+              <input id="ytVolRange" type="range" min="0" max="100" value="100" aria-label="YouTube Volume" />
+            </div>
+            <button id="ytFillTabBtn" class="btn btn-subtle" type="button" title="Clean viewport fill (best when tab-sharing in Meet)">Fill Tab</button>
+            <button id="ytHideHudBtn" class="btn btn-subtle" type="button" title="Hide YouTube player overlays">Clean HUD</button>
+            <button id="ytTheaterBtn" class="btn btn-subtle" type="button">Theater</button>
+            <button id="ytFullscreenBtn" class="btn btn-amber" type="button">Fullscreen</button>
+          </div>
+        </div>
+
+        <!-- TABS PANEL -->
+        <div class="panel" data-panel="tabs">
+          <div class="panel-row">
+            <span class="muted-note" id="tabsSummary">Waiting for Chrome extension…</span>
+            <div class="spacer"></div>
+            <button id="tabsRefreshBtn" class="btn btn-subtle btn-sm" type="button">Sync Tabs</button>
+            <button id="winFullscreenBtn" class="btn btn-subtle btn-sm" type="button">Chrome Fullscreen</button>
+          </div>
+          <div class="tabs-list" id="tabsList"></div>
+        </div>
+
+        <!-- MEET PANEL -->
+        <div class="panel" data-panel="meet">
+          <div class="panel-row">
+            <select id="meetTabSelect" class="tab-picker" aria-label="Google Meet Tab"></select>
+            <span class="status-chip" id="meetModeChip">No Meet tab</span>
+            <label class="inline-check">
+              <input id="focusAfterShareChk" type="checkbox" />
+              <span>Focus shared tab</span>
+            </label>
+          </div>
+          <div class="meet-controls">
+            <button id="meetFocusBtn" class="btn btn-subtle" type="button">Focus Meet</button>
+            <button id="meetShareBtn" class="btn btn-emerald" type="button">Share Selected Tab</button>
+            <button id="meetStopShareBtn" class="btn btn-danger" type="button" disabled>Stop Sharing</button>
+            <button id="meetMicBtn" class="btn btn-subtle" type="button">Toggle Mic</button>
+            <button id="meetCamBtn" class="btn btn-subtle" type="button">Toggle Cam</button>
+            <button id="meetLeaveBtn" class="btn btn-danger-outline" type="button">Leave Call</button>
+          </div>
+        </div>
+
+        <!-- NDI STREAM SETTINGS PANEL -->
+        <div class="panel" data-panel="ndi">
+          <div class="ndi-settings-grid">
+            <label class="setting-item">
+              <span>Resolution</span>
+              <select id="ndiResSelect">
+                <option value="640">640w (Fast Mobile)</option>
+                <option value="960" selected>960w (Balanced)</option>
+                <option value="1280">1280w (720p)</option>
+                <option value="1920">1920w (1080p)</option>
+              </select>
+            </label>
+            <label class="setting-item">
+              <span>Max FPS</span>
+              <select id="ndiFpsSelect">
+                <option value="10">10 fps</option>
+                <option value="15">15 fps</option>
+                <option value="24" selected>24 fps</option>
+                <option value="30">30 fps</option>
+                <option value="60">60 fps</option>
+              </select>
+            </label>
+            <label class="setting-item">
+              <span>JPEG Quality</span>
+              <select id="ndiQualitySelect">
+                <option value="55">55 (Low Data)</option>
+                <option value="75" selected>75 (Crisp)</option>
+                <option value="88">88 (High)</option>
+              </select>
+            </label>
+            <label class="setting-item">
+              <span>NDI Mode</span>
+              <select id="ndiBandwidthSelect">
+                <option value="highest" selected>Full Bandwidth</option>
+                <option value="lowest">Proxy / Low BW</option>
+              </select>
+            </label>
+            <div class="setting-item setting-actions">
+              <span>Demo Signal</span>
+              <button id="ndiDemoBtn" class="btn btn-subtle btn-sm" type="button">Use Test Signal</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NDI MONITOR STAGE -->
+    <main class="monitor-stage" id="monitorStage">
+      <div class="monitor-frame" id="monitorFrame">
+        <canvas id="ndiCanvas"></canvas>
+
+        <!-- Non-intrusive Telemetry HUD -->
+        <div class="hud-top-left">
+          <span class="tally-pill" id="monitorTally">STANDBY</span>
+          <span class="hud-source" id="hudSourceName">No NDI Source</span>
+        </div>
+
+        <div class="hud-top-right">
+          <span class="hud-telemetry" id="hudTelemetry">0×0 · 0.0 fps</span>
+          <div class="vu-meter" aria-label="Audio level">
+            <div class="vu-fill" id="vuFillL"></div>
+            <div class="vu-fill" id="vuFillR"></div>
+          </div>
+          <button id="monitorFullscreenBtn" class="btn-hud" type="button" title="Fullscreen NDI Monitor" aria-label="Fullscreen NDI Monitor">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+        </div>
+
+        <!-- Standby Slate Overlay -->
+        <div class="standby-overlay" id="standbyOverlay">
+          <div class="standby-card">
+            <div class="standby-title" id="standbyTitle">Waiting for NDI Signal</div>
+            <p class="standby-sub" id="standbySub">
+              Pick an active NDI source from the header dropdown, or preview the built-in broadcast test signal.
+            </p>
+            <div class="standby-actions">
+              <button id="standbyDemoBtn" class="btn btn-primary" type="button">Load Test Signal (Demo)</button>
+              <button id="standbyRefreshBtn" class="btn btn-subtle" type="button">Scan NDI Sources</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- QR PAIRING MODAL -->
+    <dialog id="qrModal" class="modal">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2>Open on iPhone / Mobile</h2>
+          <button id="closeQrBtn" class="btn-icon" type="button" aria-label="Close">✕</button>
+        </div>
+        <p class="modal-desc">
+          Ensure your iPhone is on the same Wi-Fi network, then point the iPhone Camera at this QR code to open the monitor in Safari. Tap <strong>Share → Add to Home Screen</strong> for full-screen app mode.
+        </p>
+        <div class="qr-box" id="qrBox">Loading QR…</div>
+        <div class="modal-links">
+          <div class="copy-row">
+            <span class="copy-label">iPhone / LAN URL</span>
+            <code id="qrLanUrl">...</code>
+            <button class="btn-mini copy-btn" data-copy-target="qrLanUrl" type="button">Copy</button>
+          </div>
+          <div class="copy-row">
+            <span class="copy-label">Extension WS URL</span>
+            <code id="qrExtWsUrl">...</code>
+            <button class="btn-mini copy-btn" data-copy-target="qrExtWsUrl" type="button">Copy</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- TOAST FEEDBACK -->
+    <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+  </div>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
