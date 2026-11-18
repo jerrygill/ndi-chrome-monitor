@@ -56,10 +56,18 @@ To pre-select the test signal immediately on startup:
    - *Note*: Due to Chrome security rules, starting a brand-new Google Meet tab share prompts Chrome's picker (the target tab is automatically tagged **`__NDI_SHARE__ [SHARE THIS]`** at the top of the list for a single confirmation click). Stopping sharing, Mic/Cam toggles, Google Slides, YouTube, and tab/URL switching all run hands-free.
 
 #### Option B — Studio Zero-Click Chrome Mode (Recommended for Live Production)
-Run our Studio launcher so Chrome grants allowlisted `tabCapture` access to the extension in an isolated `.ndi-chrome-studio-profile/`:
-- **macOS**: Double-click `scripts/launch-studio-chrome.command` (or run `./scripts/launch-studio-chrome.sh`)
+Run our Studio launcher so Chrome grants allowlisted `tabCapture` access to the extension:
+- **macOS (Isolated Studio profile)**: Double-click `scripts/launch-studio-chrome.command` (or run `./scripts/launch-studio-chrome.sh`)
+- **macOS / Linux (Use an existing Chrome profile by name)**: First quit Chrome completely (`Cmd+Q` on macOS), then run:
+  ```bash
+  ./scripts/launch-studio-chrome.sh --profile "alpha colors church"
+  ```
 - **Windows**: Double-click `scripts\launch-studio-chrome.bat`
-- **Linux**: Run `./scripts/launch-studio-chrome.sh`
+
+> **macOS Tips**:
+> - If you downloaded the `.zip` in Safari/Chrome, run `chmod +x scripts/*.sh scripts/*.command` and `xattr -cr .` once in Terminal before double-clicking `.command` files.
+> - Python 3.10+ is required (`brew install python@3.12` on macOS if only Apple's Python 3.9 is installed).
+> - Recent Chrome builds may require loading `extension/` once via `chrome://extensions` → **Developer mode** → **Load unpacked** inside your profile even when launching with `--profile`.
 
 Studio Mode unlocks:
 - **Zero-click** `Share Tab` in Google Meet without manual picker confirmation
@@ -71,9 +79,9 @@ Studio Mode unlocks:
 
 1. Connect your iPhone to the same Wi-Fi network as the host computer.
 2. Scan the QR code shown in the server terminal (or click the **`QR`** button inside the desktop web UI).
-3. Tap **`🔇 Audio`** once in Safari to unlock iOS WebAudio playback and see the live stereo VU meter.
+3. Tap **`Audio`** once in the header to unlock iOS WebAudio playback and view the live stereo VU meter.
 4. Optional: In Safari tap **Share → Add to Home Screen** for edge-to-edge standalone monitor mode.
-5. Use **`▲ Controls`** anytime to collapse/expand the top dock, or **`⛶`** inside the NDI stage for fullscreen view.
+5. Use **`▲ Controls`** anytime to collapse/expand the top dock, or the expand icon (`⛶`) inside the NDI stage for fullscreen view.
 
 ---
 
